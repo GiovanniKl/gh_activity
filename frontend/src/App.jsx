@@ -18,8 +18,16 @@ function todayIso() {
 // matching the "365d" preset (isoDaysAgo(364) .. today).
 const MAX_RANGE_SPAN = 364;
 
+// A native <input type="date"> reports "" (or a partial value) while the
+// user is mid-edit on one segment (e.g. typing a year digit by digit), so
+// any date math here must tolerate that instead of producing an Invalid
+// Date and throwing — that would crash the whole render tree.
+function isValidDateStr(s) {
+  return !!s && !Number.isNaN(new Date(`${s}T00:00:00Z`).getTime());
+}
+
 function daysBetween(sinceStr, untilStr) {
-  return Math.round((new Date(untilStr) - new Date(sinceStr)) / 86400000);
+  return Math.round((new Date(`${untilStr}T00:00:00Z`) - new Date(`${sinceStr}T00:00:00Z`)) / 86400000);
 }
 
 function addDays(dateStr, days) {
@@ -59,6 +67,9 @@ export default function App() {
   }
 
   useEffect(() => {
+    // Skip fetching while a date input is mid-edit (native date inputs
+    // report "" or a partial value until the user finishes typing).
+    if (!isValidDateStr(since) || !isValidDateStr(until)) return;
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [since, until]);
@@ -100,18 +111,25 @@ export default function App() {
     }
   }
 
+  // Only the field the user just finished editing is ever clamped against;
+  // the other field is nudged afterward to keep the span within a year, so
+  // typing/picking a date further in the past is never blocked mid-edit.
   function handleChangeSince(newSince) {
     setSince(newSince);
-    setUntil((prevUntil) =>
-      daysBetween(newSince, prevUntil) > MAX_RANGE_SPAN ? addDays(newSince, MAX_RANGE_SPAN) : prevUntil
-    );
+    if (!isValidDateStr(newSince)) return;
+    setUntil((prevUntil) => {
+      if (!isValidDateStr(prevUntil)) return prevUntil;
+      return daysBetween(newSince, prevUntil) > MAX_RANGE_SPAN ? addDays(newSince, MAX_RANGE_SPAN) : prevUntil;
+    });
   }
 
   function handleChangeUntil(newUntil) {
     setUntil(newUntil);
-    setSince((prevSince) =>
-      daysBetween(prevSince, newUntil) > MAX_RANGE_SPAN ? addDays(newUntil, -MAX_RANGE_SPAN) : prevSince
-    );
+    if (!isValidDateStr(newUntil)) return;
+    setSince((prevSince) => {
+      if (!isValidDateStr(prevSince)) return prevSince;
+      return daysBetween(prevSince, newUntil) > MAX_RANGE_SPAN ? addDays(newUntil, -MAX_RANGE_SPAN) : prevSince;
+    });
   }
 
   function toggleOrg(org) {
