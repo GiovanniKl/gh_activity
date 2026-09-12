@@ -14,6 +14,20 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// Difference (not count) between since/until for a 365-day-inclusive range,
+// matching the "365d" preset (isoDaysAgo(364) .. today).
+const MAX_RANGE_SPAN = 364;
+
+function daysBetween(sinceStr, untilStr) {
+  return Math.round((new Date(untilStr) - new Date(sinceStr)) / 86400000);
+}
+
+function addDays(dateStr, days) {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 export default function App() {
   const [since, setSince] = useState(isoDaysAgo(364));
   const [until, setUntil] = useState(todayIso());
@@ -75,10 +89,29 @@ export default function App() {
       } else {
         setSyncMessage(`Sync failed: ${result.error}`);
       }
-      await loadAll();
+    } catch (err) {
+      setSyncMessage(`Sync failed: ${err.message}`);
     } finally {
+      // Refresh regardless of outcome: a partial sync may still have made
+      // progress, and this is also what turns "Never synced" into an
+      // accurate timestamp (or keeps it accurate) after every attempt.
+      await loadAll();
       setSyncing(false);
     }
+  }
+
+  function handleChangeSince(newSince) {
+    setSince(newSince);
+    setUntil((prevUntil) =>
+      daysBetween(newSince, prevUntil) > MAX_RANGE_SPAN ? addDays(newSince, MAX_RANGE_SPAN) : prevUntil
+    );
+  }
+
+  function handleChangeUntil(newUntil) {
+    setUntil(newUntil);
+    setSince((prevSince) =>
+      daysBetween(prevSince, newUntil) > MAX_RANGE_SPAN ? addDays(newUntil, -MAX_RANGE_SPAN) : prevSince
+    );
   }
 
   function toggleOrg(org) {
@@ -144,8 +177,8 @@ export default function App() {
           onToggleIncludeNonDefault={() => setIncludeNonDefault((v) => !v)}
           since={since}
           until={until}
-          onChangeSince={setSince}
-          onChangeUntil={setUntil}
+          onChangeSince={handleChangeSince}
+          onChangeUntil={handleChangeUntil}
         />
         <main className="app-main">
           <Heatmap

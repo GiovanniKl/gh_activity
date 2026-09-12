@@ -1,3 +1,4 @@
+import asyncio
 import datetime as dt
 import json
 import logging
@@ -158,7 +159,23 @@ async def _sync_search_activity(client: GitHubClient, conn, username: str, since
     return upserted
 
 
+_sync_lock = asyncio.Lock()
+
+
 async def run_sync() -> dict:
+    if _sync_lock.locked():
+        return {
+            "ok": False,
+            "repos_scanned": 0,
+            "items_upserted": 0,
+            "duration_seconds": 0.0,
+            "error": "A sync is already in progress.",
+        }
+    async with _sync_lock:
+        return await _run_sync_locked()
+
+
+async def _run_sync_locked() -> dict:
     start = time.time()
     conn = db.get_conn()
     client: GitHubClient | None = None
@@ -208,14 +225,15 @@ async def run_sync() -> dict:
             "duration_seconds": time.time() - start,
             "rate_limit": client.last_rate_limit,
         }
-    except GitHubError as e:
+    except Exception as e:
         logger.exception("sync failed")
+        message = str(e) if isinstance(e, GitHubError) else f"{type(e).__name__}: {e}"
         return {
             "ok": False,
             "repos_scanned": 0,
             "items_upserted": 0,
             "duration_seconds": time.time() - start,
-            "error": str(e),
+            "error": message,
         }
     finally:
         if client is not None:

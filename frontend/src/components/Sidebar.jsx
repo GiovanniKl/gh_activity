@@ -15,6 +15,14 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
+const MAX_RANGE_SPAN = 364;
+
+function addDays(dateStr, days) {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 export default function Sidebar({
   orgs,
   selectedOrgs,
@@ -47,12 +55,25 @@ export default function Sidebar({
         </div>
         <label className="date-field">
           Since
-          <input type="date" value={since} onChange={(e) => onChangeSince(e.target.value)} />
+          <input
+            type="date"
+            value={since}
+            max={until}
+            min={addDays(until, -MAX_RANGE_SPAN)}
+            onChange={(e) => onChangeSince(e.target.value)}
+          />
         </label>
         <label className="date-field">
           Until
-          <input type="date" value={until} onChange={(e) => onChangeUntil(e.target.value)} />
+          <input
+            type="date"
+            value={until}
+            min={since}
+            max={addDays(since, MAX_RANGE_SPAN)}
+            onChange={(e) => onChangeUntil(e.target.value)}
+          />
         </label>
+        <p className="muted range-hint">Range is capped at 365 days.</p>
       </section>
 
       <section className="sidebar-section">

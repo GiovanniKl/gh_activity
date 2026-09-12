@@ -172,6 +172,11 @@ button:disabled {
   font-size: 13px;
 }
 
+.range-hint {
+  margin: 4px 0 0;
+  font-size: 11px;
+}
+
 /* Heatmap */
 .heatmap {
   margin-bottom: 24px;
