@@ -181,15 +181,16 @@ button:disabled {
 .heatmap-months {
   display: flex;
   gap: 3px;
-  padding-left: 2px;
   margin-bottom: 4px;
 }
 
 .heatmap-month {
-  width: 13px;
+  width: 11px;
   font-size: 11px;
   color: var(--muted);
   flex-shrink: 0;
+  overflow: visible;
+  white-space: nowrap;
 }
 
 .heatmap-grid {
