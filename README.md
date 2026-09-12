@@ -63,12 +63,12 @@ Open the Vite dev server URL (usually http://localhost:5173) — it proxies
 - **Organizations**: checkboxes to include/exclude activity by org (or your
   personal account, which is grouped the same way).
 - **Include private repos**: toggle private-repo activity on/off.
-- **Only non-default-branch commits**: when on, hides commits that exist on
-  the repo's default branch and shows only commits that only ever landed on
-  a non-default branch (feature branches, unmerged work, etc.) — the exact
-  gap this tool exists to fill, since GitHub's own profile graph only counts
-  default-branch commits. This toggle only affects commits; PRs, issues, and
-  reviews are unaffected by it.
+- **Include non-default-branch commits**: on by default, so commits that
+  only ever landed on a non-default branch (feature branches, unmerged
+  work, etc.) are included — the exact gap this tool exists to fill, since
+  GitHub's own profile graph only counts default-branch commits. Turn it
+  off to exclude them and see only default-branch commits. This toggle
+  only affects commits; PRs, issues, and reviews are unaffected by it.
 - Groups are expandable: click an org or repo heading to collapse/expand it.
 
 ## How syncing works

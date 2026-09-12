@@ -21,8 +21,8 @@ export default function Sidebar({
   onToggleOrg,
   includePrivate,
   onToggleIncludePrivate,
-  onlyNonDefault,
-  onToggleOnlyNonDefault,
+  includeNonDefault,
+  onToggleIncludeNonDefault,
   since,
   until,
   onChangeSince,
@@ -61,8 +61,8 @@ export default function Sidebar({
           Include private repos
         </label>
         <label className="toggle-field">
-          <input type="checkbox" checked={onlyNonDefault} onChange={onToggleOnlyNonDefault} />
-          Only non-default-branch commits
+          <input type="checkbox" checked={includeNonDefault} onChange={onToggleIncludeNonDefault} />
+          Include non-default-branch commits
         </label>
       </section>
 
