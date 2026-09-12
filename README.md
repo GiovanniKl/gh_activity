@@ -16,7 +16,7 @@ a React frontend renders it.
 2. Backend:
    ```bash
    cd backend
-   python -m venv venv
+   python -m venv venv   # or specify version (3.14 does not work currently) as `py -3.12 -m venv venv`
    venv/Scripts/activate   # on macOS/Linux: source venv/bin/activate
    pip install -r requirements.txt
    cp .env.example .env    # then edit .env and paste in your token
