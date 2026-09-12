@@ -254,6 +254,20 @@ button:disabled {
 }
 
 /* Activity groups */
+.groups-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.groups-toolbar button {
+  background: var(--panel);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
 .day-filter-banner {
   margin-bottom: 12px;
   padding: 8px 12px;
