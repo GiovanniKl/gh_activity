@@ -183,10 +183,14 @@ async def _run_sync_locked() -> dict:
         client = GitHubClient(config.GITHUB_TOKEN)
         username = await _get_username(client)
         until_dt = dt.datetime.now(dt.timezone.utc)
-        last_full_sync = db.get_meta(conn, "last_full_sync")
-        since_dt = _parse(last_full_sync) if last_full_sync else until_dt - dt.timedelta(
-            days=config.DEFAULT_LOOKBACK_DAYS
-        )
+        # Fallback window for anything with no prior sync_state of its own —
+        # deliberately NOT "since the last full sync": that global cutoff
+        # only makes sense for resources we've already scanned at least
+        # once. A repo discovered for the first time (created after an
+        # earlier sync already advanced that cutoff forward) needs the full
+        # lookback window, or its entire pre-existing history is silently
+        # skipped.
+        lookback_since = until_dt - dt.timedelta(days=config.DEFAULT_LOOKBACK_DAYS)
 
         repos = await _fetch_repos(client)
         with db.tx():
@@ -199,7 +203,7 @@ async def _run_sync_locked() -> dict:
         for repo in repos:
             repo_row = _repo_row(repo)
             state = db.get_sync_state(conn, repo_row["id"])
-            repo_since = _parse(state["last_synced_at"]) if state and state.get("last_synced_at") else since_dt
+            repo_since = _parse(state["last_synced_at"]) if state and state.get("last_synced_at") else lookback_since
 
             pushed_at = repo_row["pushed_at"]
             if pushed_at and _parse(pushed_at) < repo_since:
@@ -212,7 +216,12 @@ async def _run_sync_locked() -> dict:
                 )
 
         with db.tx():
-            items_upserted += await _sync_search_activity(client, conn, username, since_dt, until_dt)
+            # Search is global (not per-repo) and cheap regardless of window
+            # size (a fixed 3 requests), so always cover the full lookback
+            # window rather than incrementally since the last sync — that
+            # sidesteps the exact same "newly-discovered resource" gap for
+            # PRs/issues/reviews.
+            items_upserted += await _sync_search_activity(client, conn, username, lookback_since, until_dt)
             db.set_meta(conn, "last_full_sync", _iso(until_dt))
             db.set_meta(conn, "username", username)
             if client.last_rate_limit:
