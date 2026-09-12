@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS activity (
     title TEXT,
     url TEXT,
     sha_or_number TEXT NOT NULL,
+    on_default_branch INTEGER NOT NULL DEFAULT 1,
     UNIQUE(type, repo_id, sha_or_number)
 );
 CREATE INDEX IF NOT EXISTS idx_activity_date ON activity(date);
@@ -45,12 +46,19 @@ CREATE TABLE IF NOT EXISTS meta (
 """
 
 
+def _migrate(conn: sqlite3.Connection):
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(activity)")}
+    if "on_default_branch" not in columns:
+        conn.execute("ALTER TABLE activity ADD COLUMN on_default_branch INTEGER NOT NULL DEFAULT 1")
+
+
 def get_conn() -> sqlite3.Connection:
     conn = getattr(_local, "conn", None)
     if conn is None:
         conn = sqlite3.connect(config.DB_PATH, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         conn.executescript(SCHEMA)
+        _migrate(conn)
         conn.commit()
         _local.conn = conn
     return conn
@@ -82,12 +90,14 @@ def upsert_repo(conn, repo: dict):
 
 
 def upsert_activity(conn, item: dict):
+    item = {"on_default_branch": 1, **item}
     conn.execute(
         """
-        INSERT INTO activity (type, date, repo_id, org, private, title, url, sha_or_number)
-        VALUES (:type, :date, :repo_id, :org, :private, :title, :url, :sha_or_number)
+        INSERT INTO activity (type, date, repo_id, org, private, title, url, sha_or_number, on_default_branch)
+        VALUES (:type, :date, :repo_id, :org, :private, :title, :url, :sha_or_number, :on_default_branch)
         ON CONFLICT(type, repo_id, sha_or_number) DO UPDATE SET
-            date=excluded.date, title=excluded.title, url=excluded.url, private=excluded.private
+            date=excluded.date, title=excluded.title, url=excluded.url, private=excluded.private,
+            on_default_branch=CASE WHEN excluded.on_default_branch = 1 THEN 1 ELSE on_default_branch END
         """,
         item,
     )
@@ -131,7 +141,7 @@ def get_meta(conn, key: str) -> str | None:
 def fetch_activity(conn, since: str, until: str) -> list[dict]:
     rows = conn.execute(
         """
-        SELECT a.type, a.date, a.org, a.private, a.title, a.url, a.sha_or_number,
+        SELECT a.type, a.date, a.org, a.private, a.title, a.url, a.sha_or_number, a.on_default_branch,
                r.name AS repo, r.full_name AS repo_full_name
         FROM activity a
         JOIN repos r ON r.id = a.repo_id

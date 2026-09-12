@@ -48,6 +48,9 @@ export default function ActivityGroups({ items, selectedDay, onClearDay }) {
                   {repoItems.map((item) => (
                     <li key={`${item.type}-${item.sha_or_number}`} className="activity-item">
                       <span className={`badge type-${item.type}`}>{TYPE_LABELS[item.type]}</span>
+                      {item.type === "commit" && !item.on_default_branch && (
+                        <span className="badge non-default">non-default</span>
+                      )}
                       <a href={item.url} target="_blank" rel="noreferrer">
                         {item.title || item.sha_or_number}
                       </a>

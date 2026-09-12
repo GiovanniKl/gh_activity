@@ -53,6 +53,24 @@ npm run dev
 Open the Vite dev server URL (usually http://localhost:5173) — it proxies
 `/api` requests to the backend on port 8000.
 
+## Using the dashboard
+
+- **Heatmap**: click a day square to filter everything below to that day;
+  click it again (or the "Clear day filter" button) to remove the filter,
+  or click a different day to switch to it. Color intensity and the day
+  counts always reflect whichever sidebar filters are active.
+- **Date range**: presets (30/90/180/365 days) or custom since/until dates.
+- **Organizations**: checkboxes to include/exclude activity by org (or your
+  personal account, which is grouped the same way).
+- **Include private repos**: toggle private-repo activity on/off.
+- **Only non-default-branch commits**: when on, hides commits that exist on
+  the repo's default branch and shows only commits that only ever landed on
+  a non-default branch (feature branches, unmerged work, etc.) — the exact
+  gap this tool exists to fill, since GitHub's own profile graph only counts
+  default-branch commits. This toggle only affects commits; PRs, issues, and
+  reviews are unaffected by it.
+- Groups are expandable: click an org or repo heading to collapse/expand it.
+
 ## How syncing works
 
 - The first sync scans the last `DEFAULT_LOOKBACK_DAYS` (default 365, set in

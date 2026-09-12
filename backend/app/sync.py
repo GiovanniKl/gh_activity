@@ -68,7 +68,12 @@ async def _sync_commits_for_repo(client, conn, repo_row, username, since_dt, unt
     since_str = _iso(since_dt)
     until_str = _iso(until_dt)
 
-    for branch in branches:
+    default_branch = repo_row["default_branch"]
+    # Scan the default branch first so on_default_branch is known before any
+    # other branch's commits are upserted (upsert never downgrades it back to false).
+    ordered_branches = sorted(branches, key=lambda b: b["name"] != default_branch)
+
+    for branch in ordered_branches:
         name = branch["name"]
         head_sha = branch["commit"]["sha"]
         new_heads[name] = head_sha
@@ -94,6 +99,7 @@ async def _sync_commits_for_repo(client, conn, repo_row, username, since_dt, unt
                     "title": (commit["commit"]["message"] or "").split("\n")[0][:300],
                     "url": commit["html_url"],
                     "sha_or_number": sha,
+                    "on_default_branch": 1 if name == default_branch else 0,
                 },
             )
             upserted += 1

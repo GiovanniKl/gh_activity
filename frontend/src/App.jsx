@@ -21,6 +21,7 @@ export default function App() {
   const [orgs, setOrgs] = useState([]);
   const [selectedOrgs, setSelectedOrgs] = useState(new Set());
   const [includePrivate, setIncludePrivate] = useState(true);
+  const [onlyNonDefault, setOnlyNonDefault] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -94,8 +95,14 @@ export default function App() {
   }
 
   const baseFiltered = useMemo(
-    () => items.filter((it) => selectedOrgs.has(it.org) && (includePrivate || !it.private)),
-    [items, selectedOrgs, includePrivate]
+    () =>
+      items.filter(
+        (it) =>
+          selectedOrgs.has(it.org) &&
+          (includePrivate || !it.private) &&
+          (!onlyNonDefault || it.type !== "commit" || !it.on_default_branch)
+      ),
+    [items, selectedOrgs, includePrivate, onlyNonDefault]
   );
 
   const dailyCounts = useMemo(() => {
@@ -133,6 +140,8 @@ export default function App() {
           onToggleOrg={toggleOrg}
           includePrivate={includePrivate}
           onToggleIncludePrivate={() => setIncludePrivate((v) => !v)}
+          onlyNonDefault={onlyNonDefault}
+          onToggleOnlyNonDefault={() => setOnlyNonDefault((v) => !v)}
           since={since}
           until={until}
           onChangeSince={setSince}

@@ -359,6 +359,9 @@ button:disabled {
   color: var(--private);
   margin-left: 6px;
 }
+.badge.non-default {
+  color: #8250df;
+}
 
 @media (max-width: 800px) {
   .app-body {

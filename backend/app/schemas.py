@@ -9,6 +9,7 @@ class ActivityItem(BaseModel):
     title: str | None
     url: str | None
     sha_or_number: str
+    on_default_branch: bool
     repo: str
     repo_full_name: str
 
