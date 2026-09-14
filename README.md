@@ -56,6 +56,9 @@ uvicorn app.main:app
 
 Then open http://localhost:8000 and click **Sync now** to pull your activity.
 
+On Windows, you can also run the `autostart.ps1` script to launch the server
+and open a browser tab automatically.
+
 ### Development mode
 
 To iterate on the frontend with hot reload, run the backend as above and, in
